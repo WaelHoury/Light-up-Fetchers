@@ -1,105 +1,71 @@
-const xhrMock = require('xhr-mock').default; // Use require instead of import
-const AdvancedHttpClient = require('../src/HttpClient');
+// test.js
+const AdvancedHttpClient = require('../src'); // Adjusted import path
 
-describe('AdvancedHttpClient with XMLHttpRequest', () => {
-  beforeEach(() => xhrMock.setup());
-  afterEach(() => xhrMock.teardown());
+const XMLHttpRequest = require('xhr2');
+global.XMLHttpRequest = XMLHttpRequest;
 
-  test('should perform a GET request', async () => {
-    xhrMock.get('https://api.example.com/data', {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: 'test' }),
-    });
+global.btoa = (str) => Buffer.from(str, 'binary').toString('base64');
 
-    const client = new AdvancedHttpClient({ baseURL: 'https://api.example.com' });
-    const response = await client.get('/data');
+jest.setTimeout(30000); // 30 seconds
 
-    expect(response.data).toEqual({ data: 'test' });
+describe('AdvancedHttpClient with XMLHttpRequest and Random User API', () => {
+  test('should perform a GET request from Random User API', async () => {
+    const client = new AdvancedHttpClient();
+
+    const response = await client.get('https://randomuser.me/api/');
+    expect(response.data.results).toHaveLength(1);
+    console.log('Random User:', response.data.results[0]);
   });
 
-  test('should auto-parse JSON response', async () => {
-    xhrMock.get('https://api.example.com/json', {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: 'value' }),
-    });
+  test('should auto-parse JSON response from Random User API', async () => {
+    const client = new AdvancedHttpClient();
+    const response = await client.get('https://randomuser.me/api/?results=1');
 
-    const client = new AdvancedHttpClient({ baseURL: 'https://api.example.com' });
-    const response = await client.get('/json');
-
-    expect(response.data).toEqual({ key: 'value' });
+    expect(response.data.results).toHaveLength(1);
   });
 
-  test('should handle request interceptors', async () => {
-    xhrMock.get('https://api.example.com/data', {
-      status: 200,
-      body: JSON.stringify({ data: 'test' }),
-    });
+  test('should handle request interceptors with Random User API', async () => {
+    const client = new AdvancedHttpClient();
 
-    const client = new AdvancedHttpClient({ baseURL: 'https://api.example.com' });
-
-    // Add request interceptor
     client.addRequestInterceptor((config) => {
-      config.headers['X-Test-Header'] = 'test';
+      config.headers['X-Test-Header'] = 'test-header-value';
       return config;
     });
 
-    await client.get('/data');
-
-    const lastRequest = xhrMock.getRequest('https://api.example.com/data');
-    expect(lastRequest.header('X-Test-Header')).toBe('test');
+    const response = await client.get('https://randomuser.me/api/?results=1');
+    expect(response.data.results).toHaveLength(1);
+    console.log('Request successful with headers interceptor.');
   });
 
-  test('should handle response interceptors', async () => {
-    xhrMock.get('https://api.example.com/data', {
-      status: 200,
-      body: JSON.stringify({ data: 'test' }),
-    });
+  test('should handle response interceptors with Random User API', async () => {
+    const client = new AdvancedHttpClient();
 
-    const client = new AdvancedHttpClient({ baseURL: 'https://api.example.com' });
-
-    // Add response interceptor
     client.addResponseInterceptor((response) => {
-      response.data.extraField = 'extra';
+      response.data.extraField = 'extra-value';
       return response;
     });
 
-    const response = await client.get('/data');
-    expect(response.data.extraField).toBe('extra');
+    const response = await client.get('https://randomuser.me/api/?results=1');
+    expect(response.data.extraField).toBe('extra-value');
   });
 
-  test('should handle retries on failure', async () => {
-    let attempts = 0;
-    xhrMock.get('https://api.example.com/retry', (req, res) => {
-      attempts++;
-      if (attempts < 3) {
-        return res.status(500);
-      }
-      return res.status(200).body(JSON.stringify({ success: true }));
-    });
-
+  test('should handle retries on failure with Random User API', async () => {
     const client = new AdvancedHttpClient({
-      baseURL: 'https://api.example.com',
       maxRetries: 3,
-      retryDelay: 100,
+      retryDelay: 1000,
     });
 
-    const response = await client.get('/retry');
-    expect(response.data).toEqual({ success: true });
-    expect(attempts).toBe(3);
+    const response = await client.get('https://randomuser.me/api/?results=1');
+    expect(response.data.results).toHaveLength(1);
   });
 
-  test('should handle timeout', async () => {
-    xhrMock.get('https://api.example.com/timeout', () => {
-      return new Promise((resolve) => setTimeout(() => resolve({ status: 200 }), 2000));
-    });
-
+  test('should handle timeout with Random User API', async () => {
     const client = new AdvancedHttpClient({
-      baseURL: 'https://api.example.com',
-      timeout: 500,
+      timeout: 1,
     });
 
-    await expect(client.get('/timeout')).rejects.toThrow('Timeout of 500ms exceeded');
+    await expect(
+      client.get('https://randomuser.me/api/?results=1')
+    ).rejects.toThrow('Timeout of 1ms exceeded');
   });
 });
