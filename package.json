@@ -1,0 +1,38 @@
+{
+    "name": "advanced-http-client",
+    "version": "1.0.0",
+    "description": "A powerful and flexible HTTP client for JavaScript applications.",
+    "main": "src/index.js",
+    "types": "types/index.d.ts",
+    "scripts": {
+        "test": "jest",
+        "build": "babel src -d lib",
+        "prepublishOnly": "npm test && npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yourusername/advanced-http-client.git"
+    },
+    "keywords": [
+        "http",
+        "client",
+        "fetch",
+        "axios",
+        "request",
+        "network"
+    ],
+    "author": "Your Name",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/yourusername/advanced-http-client/issues"
+    },
+    "homepage": "https://github.com/yourusername/advanced-http-client#readme",
+    "devDependencies": {
+        "@babel/cli": "^7.15.4",
+        "@babel/core": "^7.15.5",
+        "@babel/preset-env": "^7.15.6",
+        "fetch-mock": "^9.11.0",
+        "jest": "^27.2.0",
+        "xhr-mock": "^2.5.1"
+    }
+}
